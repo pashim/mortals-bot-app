@@ -51,7 +51,7 @@ public class TelegramBotHandler extends TelegramLongPollingBot {
     public void sendText(Long who, String what){
         SendMessage sm = SendMessage.builder()
                 .chatId(who.toString()) //Who are we sending a message to
-                .text("hello " + what).build();    //Message content
+                .text(what).build();    //Message content
         try {
             execute(sm);                        //Actually sending the message
         } catch (TelegramApiException e) {
