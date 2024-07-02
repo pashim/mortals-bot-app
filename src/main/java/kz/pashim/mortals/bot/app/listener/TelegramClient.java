@@ -2,6 +2,7 @@ package kz.pashim.mortals.bot.app.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -10,7 +11,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Slf4j
 @Component
-public class TelegramBotListener extends TelegramLongPollingBot {
+@ConditionalOnProperty("telegram.api.bot.enabled")
+public class TelegramClient extends TelegramLongPollingBot {
 
     @Value("${telegram.api.bot.name}")
     private String botName;
