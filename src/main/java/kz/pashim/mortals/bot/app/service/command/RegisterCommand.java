@@ -5,11 +5,13 @@ import kz.pashim.mortals.bot.app.model.Source;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty("telegram.api.bot.enabled")
 public class RegisterCommand extends Command {
 
     private final UserRepository userRepository;
