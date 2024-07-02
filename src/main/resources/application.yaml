@@ -13,3 +13,9 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+
+telegram:
+  api:
+    bot:
+      name: ${TELEGRAM_BOT_NAME}
+      token: ${TELEGRAM_BOT_TOKEN}

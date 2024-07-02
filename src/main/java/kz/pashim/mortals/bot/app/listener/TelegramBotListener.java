@@ -1,6 +1,7 @@
 package kz.pashim.mortals.bot.app.listener;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -11,14 +12,20 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Component
 public class TelegramBotListener extends TelegramLongPollingBot {
 
+    @Value("${telegram.api.bot.name}")
+    private String botName;
+
+    @Value("${telegram.api.bot.token}")
+    private String botToken;
+
     @Override
     public String getBotUsername() {
-        return "MortalsBot";
+        return botName;
     }
 
     @Override
     public String getBotToken() {
-        return "7209512559:AAEfcF46jI4U0sEExxbMxKNeZMR5_s67JWI";
+        return botToken;
     }
 
     @Override
