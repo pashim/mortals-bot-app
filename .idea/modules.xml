@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/mortals-app-bot.iml" filepath="$PROJECT_DIR$/mortals-app-bot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mortals-app-bot.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mortals-app-bot.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mortals-app-bot.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mortals-app-bot.test.iml" />
+    </modules>
+  </component>
+</project>
