@@ -18,7 +18,7 @@ public class TestController {
         return "Hello world!";
     }
 
-    @GetMapping
+    @GetMapping("/create")
     public String create(@RequestParam String nickname) {
         return userRepository.save(UserEntity.builder().nickname(nickname).mmr(1000L).build()).getId().toString();
     }

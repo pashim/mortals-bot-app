@@ -1,16 +1,16 @@
 package kz.pashim.mortals.bot.app.model;
 
 import lombok.Data;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.util.UUID;
+import javax.persistence.MappedSuperclass;
 
 @Data
-abstract class BaseEntity {
+@MappedSuperclass
+public class BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
