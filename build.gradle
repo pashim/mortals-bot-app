@@ -30,6 +30,11 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
+jar {
+    archiveBaseName = 'mortals-app-bot'
+    version = '0.0.1'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
