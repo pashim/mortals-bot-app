@@ -25,3 +25,8 @@ replay_pid*
 
 .idea
 *.iml
+
+.java-version
+
+build
+.gradle
