@@ -11,6 +11,7 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        format_sql: true
   flyway:
     url: jdbc:postgresql://${DATABASE_HOST}
     user: ${DATABASE_USER}

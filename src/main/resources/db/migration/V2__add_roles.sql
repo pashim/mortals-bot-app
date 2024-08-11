@@ -3,5 +3,5 @@ ALTER TABLE "game_session"
 
 CREATE TYPE "user_role" AS ENUM('ADMIN', 'MODERATOR');
 
-ALTER TABLE "user"
+ALTER TABLE "_user"
     ADD "role" user_role;

@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS "channel" (
     "id" SERIAL,
     "name" VARCHAR(30) NOT NULL,
@@ -5,14 +7,14 @@ CREATE TABLE IF NOT EXISTS "channel" (
     PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "group" (
+CREATE TABLE IF NOT EXISTS "_group" (
     "id" SERIAL,
     "source_id" VARCHAR(50) NOT NULL,
     "channel_id" INTEGER REFERENCES "channel",
     PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE IF NOT EXISTS "_user" (
     "id" SERIAL,
     "nickname" VARCHAR(50) NOT NULL,
     "title" VARCHAR(100),

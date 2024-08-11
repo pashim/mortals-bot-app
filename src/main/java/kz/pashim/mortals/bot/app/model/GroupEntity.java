@@ -10,7 +10,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "group")
+@Table(name = "_group")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
