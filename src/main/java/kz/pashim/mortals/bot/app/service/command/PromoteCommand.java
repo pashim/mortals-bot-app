@@ -46,7 +46,7 @@ public class PromoteCommand extends Command {
         var user = update.getMessage().getFrom();
         var chatId = update.getMessage().getChatId();
 
-        var userEntity = userService.getUser(chatId, user.getId(), telegramClient);
+        var userEntity = userService.getUser(chatId.toString(), user.getId().toString(), telegramClient);
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.ADMIN)) {
             telegramClient.sendText(chatId, "Только администраторы канала могут назначать роли");
             return;
@@ -58,7 +58,7 @@ public class PromoteCommand extends Command {
             return;
         }
 
-        var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId, userName);
+        var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId.toString(), userName);
         if (userToPromote.isEmpty()) {
             telegramClient.sendText(chatId, String.format("Пользователь %s не найден", userName));
             return;

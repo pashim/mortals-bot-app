@@ -65,7 +65,7 @@ public class StartGameCommand extends Command {
         var user = update.getMessage().getFrom();
         var chatId = update.getMessage().getChatId();
 
-        var userEntity = userService.getUser(chatId, user.getId(), telegramClient);
+        var userEntity = userService.getUser(chatId.toString(), user.getId().toString(), telegramClient);
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
             telegramClient.sendText(chatId, "Нет прав начать игровую сессию");
             return;

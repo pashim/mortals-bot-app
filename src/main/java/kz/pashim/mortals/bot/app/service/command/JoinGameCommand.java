@@ -59,7 +59,7 @@ public class JoinGameCommand extends Command {
         var user = update.getMessage().getFrom();
         var chatId = update.getMessage().getChatId();
 
-        var userEntity = userService.getUser(chatId, user.getId(), telegramClient);
+        var userEntity = userService.getUser(chatId.toString(), user.getId().toString(), telegramClient);
 
         var sessionUuid = BotMessageUtils.extractFirstArgument(update.getMessage().getText());
         if (sessionUuid == null) {

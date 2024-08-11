@@ -15,7 +15,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserEntity getUser(Long groupId, Long sourceId, BotCallback callback) {
+    public UserEntity getUser(String groupId, String sourceId, BotCallback callback) {
         var user = userRepository.findByGroupSourceIdAndSourceUserId(
                 groupId, sourceId
         );

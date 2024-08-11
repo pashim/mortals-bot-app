@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends CrudRepository<UserEntity, Long> {
-    Optional<UserEntity> findByGroupSourceIdAndSourceUserId(Long groupId, Long sourceUserId);
-    Optional<UserEntity> findByGroupSourceIdAndNickname(Long groupId, String nickname);
+    Optional<UserEntity> findByGroupSourceIdAndSourceUserId(String groupId, String sourceUserId);
+    Optional<UserEntity> findByGroupSourceIdAndNickname(String groupId, String nickname);
 }
