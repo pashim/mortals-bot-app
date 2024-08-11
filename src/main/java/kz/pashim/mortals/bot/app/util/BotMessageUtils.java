@@ -1,16 +1,15 @@
 package kz.pashim.mortals.bot.app.util;
 
+import org.springframework.util.StringUtils;
+
 public class BotMessageUtils {
 
     public static String extractCommand(String message) {
+        if (!StringUtils.hasText(message)) {
+            return null;
+        }
         if (message.startsWith("/")) {
-            String[] parts = message.split(" ");
-
-            if (parts.length <= 1) {
-                return null;
-            }
-
-            return parts[0];
+            return message.split(" ")[0];
         }
         return null;
     }
