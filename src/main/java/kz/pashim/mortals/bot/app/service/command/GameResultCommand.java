@@ -107,7 +107,7 @@ public class GameResultCommand extends Command {
                 gameSessionEntity.getChannel(),
                 gameSessionEntity.getGroup(),
                 gameSessionEntity.getDiscipline(),
-                it.getParticipant()
+                it.getUser()
         );
     }
 
@@ -126,7 +126,7 @@ public class GameResultCommand extends Command {
                         );
                         return String.format(
                                 "%s: [%s](%s)",
-                                gameSessionParticipant.getParticipant().getNickname(),
+                                gameSessionParticipant.getUser().getNickname(),
                                 rating.getMmr(),
                                 gameSessionParticipant.getTeamNumber().equals(winner) ? "+" + RATING_DIFF : "-" + RATING_DIFF
                         );

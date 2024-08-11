@@ -104,7 +104,7 @@ public class StartGameCommand extends Command {
 
         var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
         telegramClient.sendText(chatId, String.format(
-                "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой /join %s",
+                "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой \n/join %s",
                 discipline.get().getName(),
                 gameSessionEntity.getUuid()
         ));

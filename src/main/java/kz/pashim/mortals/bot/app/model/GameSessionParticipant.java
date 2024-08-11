@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -23,6 +22,6 @@ public class GameSessionParticipant extends BaseEntity {
     private GameSessionEntity gameSession;
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserEntity participant;
+    private UserEntity user;
     private Integer teamNumber;
 }

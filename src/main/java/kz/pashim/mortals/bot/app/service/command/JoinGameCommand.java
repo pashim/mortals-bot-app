@@ -80,7 +80,7 @@ public class JoinGameCommand extends Command {
             telegramClient.sendText(chatId, "Нельзя присоединиться к завершенной игровой сессии");
             return;
         }
-        if (gameSessionEntity.get().getParticipants().stream().map(GameSessionParticipant::getParticipant).collect(Collectors.toSet()).contains(userEntity)) {
+        if (gameSessionEntity.get().getParticipants().stream().map(GameSessionParticipant::getUser).collect(Collectors.toSet()).contains(userEntity)) {
             telegramClient.sendText(chatId, String.format("Пользователь %s уже находится в лобби", userEntity.getNickname()));
             return;
         }
@@ -113,7 +113,7 @@ public class JoinGameCommand extends Command {
                                 gameSessionEntity.getChannel(),
                                 gameSessionEntity.getGroup(),
                                 gameSessionEntity.getDiscipline(),
-                                it.getParticipant()
+                                it.getUser()
                         )))
                         .collect(Collectors.toList())
         );
@@ -127,7 +127,7 @@ public class JoinGameCommand extends Command {
     private GameSessionEntity joinGameSession(GameSessionEntity gameSessionEntity, UserEntity userEntity) {
         gameSessionEntity.getParticipants().add(GameSessionParticipant.builder()
                 .gameSession(gameSessionEntity)
-                .participant(userEntity)
+                .user(userEntity)
                 .build());
 
         return gameSessionRepository.save(gameSessionEntity);
@@ -146,7 +146,7 @@ public class JoinGameCommand extends Command {
 
         teams.forEach((key, value) -> {
             stringBuilder.append(value.stream()
-                    .map(it -> it.getParticipant().getNickname())
+                    .map(it -> it.getUser().getNickname())
                     .collect(Collectors.joining(", ")));
             stringBuilder.append("\n");
         });
