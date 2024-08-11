@@ -35,7 +35,7 @@ public class GameSessionEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Type(type = "pgsql_enum")
     private GameSessionState state;
-    private ZonedDateTime time;
+    private ZonedDateTime date;
     @Column(name = "session_uuid")
     private UUID uuid;
 

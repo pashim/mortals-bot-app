@@ -116,7 +116,7 @@ public class StartGameCommand extends Command {
                         .group(groupEntity)
                         .discipline(disciplineEntity)
                         .state(GameSessionState.PREPARING)
-                        .time(ZonedDateTime.now())
+                        .date(ZonedDateTime.now())
                         .initiator(userEntity)
                         .build()
         );
