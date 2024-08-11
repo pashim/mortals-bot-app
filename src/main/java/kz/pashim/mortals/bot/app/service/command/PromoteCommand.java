@@ -64,10 +64,8 @@ public class PromoteCommand extends Command {
             return;
         }
 
-        log.info("user to promote: " + userToPromote.get());
-        log.info("user to promote id: " + userToPromote.get().getId());
         promote(userToPromote.get(), UserRole.MODERATOR);
-        telegramClient.sendText(chatId, String.format("Пользователю %s назначена роль: %s", user.getUserName(), UserRole.MODERATOR.displayName));
+        telegramClient.sendText(chatId, String.format("Пользователю %s назначена роль: %s", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
     }
 
     private void promote(UserEntity user, UserRole userRole) {

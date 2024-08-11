@@ -3,23 +3,26 @@ package kz.pashim.mortals.bot.app.model;
 import io.hypersistence.utils.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "_user")
-@Data
+@Getter
+@Setter
+@ToString
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
@@ -27,12 +30,8 @@ import javax.persistence.Table;
         name = "pgsql_enum",
         typeClass = PostgreSQLEnumType.class
 )
-public class UserEntity {
+public class UserEntity extends BaseEntity {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
     private String nickname;
     private String title;
     private String sourceUserId;
