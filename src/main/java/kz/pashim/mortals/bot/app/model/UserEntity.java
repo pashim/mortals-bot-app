@@ -24,7 +24,6 @@ import javax.persistence.Table;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @SuperBuilder(toBuilder = true)
 @TypeDef(
         name = "pgsql_enum",
