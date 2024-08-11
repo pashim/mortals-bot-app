@@ -15,7 +15,7 @@ public class TestController {
 
     @GetMapping
     public String hello() {
-        return "Hello world!";
+        return "Hello world!!!";
     }
 
     @Deprecated

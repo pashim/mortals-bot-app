@@ -38,6 +38,7 @@ public class TelegramBotHandler extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         var msg = update.getMessage();
+        log.info("Received telegram event with message: {}", msg);
         var user = msg.getFrom();
 
         var command = commandRegistry.getCommand(msg.getText());
