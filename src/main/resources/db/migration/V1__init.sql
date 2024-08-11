@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "rating" (
     "channel_id" INTEGER REFERENCES "channel",
     "group_id" INTEGER REFERENCES "_group",
     "discipline_id" INTEGER REFERENCES "discipline",
-    "user_id" INTEGER REFERENCES "user",
+    "user_id" INTEGER REFERENCES "_user",
     "mmr" SMALLINT NOT NULL,
     UNIQUE ("channel_id", "group_id", "discipline_id", "user_id"),
     PRIMARY KEY ("id")
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS "game_session" (
 
 CREATE TABLE IF NOT EXISTS "game_session_participant" (
     "game_session_id" INTEGER REFERENCES "game_session",
-    "user_id" INTEGER REFERENCES "user"
+    "user_id" INTEGER REFERENCES "_user"
 );
 
 

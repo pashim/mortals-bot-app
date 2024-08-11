@@ -1,5 +1,5 @@
 ALTER TABLE "game_session"
-    ADD "initiator" INTEGER REFERENCES "user";
+    ADD "initiator" INTEGER REFERENCES "_user";
 
 CREATE TYPE "user_role" AS ENUM('ADMIN', 'MODERATOR');
 
