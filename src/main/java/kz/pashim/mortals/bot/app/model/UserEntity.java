@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -14,11 +16,13 @@ import javax.persistence.Table;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class UserEntity extends BaseEntity {
     private String nickname;
     private String title;
     private String sourceUserId;
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
     @ManyToOne
     private GroupEntity group;
 }

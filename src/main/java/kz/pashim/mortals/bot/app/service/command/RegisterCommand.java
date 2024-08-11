@@ -5,6 +5,7 @@ import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
 import kz.pashim.mortals.bot.app.model.GroupEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
+import kz.pashim.mortals.bot.app.model.UserRole;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
 import kz.pashim.mortals.bot.app.repository.GroupRepository;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
@@ -64,13 +65,18 @@ public class RegisterCommand extends Command {
             log.error("Channel not found");
             throw new IllegalArgumentException("Channel not found");
         }
+        var userEntityBuilder = UserEntity.builder()
+                .nickname(user.getUserName())
+                .sourceUserId(user.getId().toString());
+
         var group = groupRepository.findByChannelAndSourceId(channel, chatId.toString())
-                .orElse(createGroup(channel, chatId.toString()));
+                .orElseGet(() -> {
+                    userEntityBuilder.role(UserRole.ADMIN);
+                    return createGroup(channel, chatId.toString());
+                });
 
         return userRepository.save(
-                UserEntity.builder()
-                        .nickname(user.getUserName())
-                        .sourceUserId(user.getId().toString())
+                userEntityBuilder
                         .group(group)
                         .build()
         );
