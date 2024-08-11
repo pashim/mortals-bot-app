@@ -15,10 +15,10 @@ import javax.persistence.MappedSuperclass;
 @Getter
 @Setter
 @ToString
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @MappedSuperclass
+@SuperBuilder(toBuilder = true)
 public abstract class BaseEntity {
 
     @Id

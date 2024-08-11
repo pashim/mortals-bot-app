@@ -22,10 +22,10 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @ToString
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @TypeDef(
         name = "pgsql_enum",
         typeClass = PostgreSQLEnumType.class
