@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -47,6 +48,6 @@ public class GameSessionEntity extends BaseEntity {
     private GroupEntity group;
     @ManyToOne
     private DisciplineEntity discipline;
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "gameSession", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "gameSession", orphanRemoval = true)
     private Set<GameSessionParticipant> participants = new HashSet<>();
 }
