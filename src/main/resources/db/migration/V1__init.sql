@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "_user" (
     "nickname" VARCHAR(50) NOT NULL,
     "title" VARCHAR(100),
     "source_user_id" varchar(50) NOT NULL,
-    "group_id" INTEGER REFERENCES "group",
+    "group_id" INTEGER REFERENCES "_group",
     UNIQUE ("source_user_id", "group_id"),
     PRIMARY KEY ("id")
 );
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS "discipline" (
 CREATE TABLE IF NOT EXISTS "rating" (
     "id" SERIAL,
     "channel_id" INTEGER REFERENCES "channel",
-    "group_id" INTEGER REFERENCES "group",
+    "group_id" INTEGER REFERENCES "_group",
     "discipline_id" INTEGER REFERENCES "discipline",
     "user_id" INTEGER REFERENCES "user",
     "mmr" SMALLINT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TYPE game_session_state AS ENUM('PREPARING', 'STARTED', 'FINISHED', 'ABOR
 CREATE TABLE IF NOT EXISTS "game_session" (
     "id" SERIAL,
     "channel_id" INTEGER REFERENCES "channel",
-    "group_id" INTEGER REFERENCES "group",
+    "group_id" INTEGER REFERENCES "_group",
     "discipline_id" INTEGER REFERENCES "discipline",
     "state" game_session_state NOT NULL,
     "date" TIMESTAMPTZ NOT NULL,
