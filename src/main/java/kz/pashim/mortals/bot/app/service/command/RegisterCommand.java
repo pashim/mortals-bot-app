@@ -58,7 +58,7 @@ public class RegisterCommand extends Command {
         }
 
         if (userRepository.findByGroupSourceIdAndSourceUserId(chatId.toString(), user.getId().toString()).isPresent()) {
-            telegramClient.sendText(chatId, String.format("Пользователь %s уже зарегистрирован", user.getId()));
+            telegramClient.sendText(chatId, String.format("Пользователь %s уже зарегистрирован", user.getUserName()));
             return;
         }
 

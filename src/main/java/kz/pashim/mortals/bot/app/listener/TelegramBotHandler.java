@@ -2,6 +2,7 @@ package kz.pashim.mortals.bot.app.listener;
 
 import kz.pashim.mortals.bot.app.exception.BotException;
 import kz.pashim.mortals.bot.app.service.command.CommandRegistry;
+import kz.pashim.mortals.bot.app.util.BotMessageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +43,7 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
         log.info("Received telegram event with message: {}", msg);
         var user = msg.getFrom();
 
-        var command = commandRegistry.getCommand(msg.getText());
+        var command = commandRegistry.getCommand(BotMessageUtils.extractCommand(msg.getText()));
         if (command == null) {
             sendText(user.getId(), "хз че ты высрал...");
             return;
