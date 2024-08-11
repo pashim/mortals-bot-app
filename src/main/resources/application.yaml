@@ -6,8 +6,6 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    hibernate:
-      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -17,6 +15,7 @@ spring:
     url: jdbc:postgresql://${DATABASE_HOST}
     user: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
+    locations: classpath:db/migration
 
 telegram:
   api:
