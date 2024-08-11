@@ -72,7 +72,7 @@ public class AbortGameCommand extends Command {
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            telegramClient.sendText(chatId, String.format("Дисциплина %s не найден", discipline));
+            telegramClient.sendText(chatId, String.format("Дисциплина %s не найден", discipline.get().getName()));
             return;
         }
 
