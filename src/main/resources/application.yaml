@@ -13,6 +13,10 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+  flyway:
+    url: jdbc:postgresql://${DATABASE_HOST}
+    user: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
 
 telegram:
   api:
