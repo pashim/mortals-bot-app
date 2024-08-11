@@ -25,6 +25,8 @@ public class GameSessionEntity extends BaseEntity {
     private ZonedDateTime time;
 
     @ManyToOne
+    private UserEntity initiator;
+    @ManyToOne
     private ChannelEntity channel;
     @ManyToOne
     private GroupEntity group;

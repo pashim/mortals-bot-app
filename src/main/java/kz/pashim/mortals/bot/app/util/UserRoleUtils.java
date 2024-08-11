@@ -19,4 +19,8 @@ public class UserRoleUtils {
         }
         return false;
     }
+
+    public static boolean isAbleToStartGame(UserEntity user) {
+        return List.of(UserRole.ADMIN, UserRole.MODERATOR).contains(user.getRole());
+    }
 }

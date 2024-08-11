@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.listener;
 
+import kz.pashim.mortals.bot.app.exception.BotException;
 import kz.pashim.mortals.bot.app.service.command.CommandRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Component
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @RequiredArgsConstructor
-public class TelegramBotHandler extends TelegramLongPollingBot {
+public class TelegramBotHandler extends TelegramLongPollingBot implements BotCallback {
 
     private final CommandRegistry commandRegistry;
 
@@ -46,17 +47,24 @@ public class TelegramBotHandler extends TelegramLongPollingBot {
             sendText(user.getId(), "хз че ты высрал...");
             return;
         }
-        command.execute(update);
+        try {
+            command.execute(update);
+        } catch (BotException ignore) { }
     }
 
     public void sendText(Long who, String what){
         SendMessage sm = SendMessage.builder()
-                .chatId(who.toString()) //Who are we sending a message to
-                .text(what).build();    //Message content
+                .chatId(who.toString())
+                .text(what).build();
         try {
-            execute(sm);                        //Actually sending the message
+            execute(sm);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);      //Any error will be printed here
+            throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void sendMessage(String chatId, String message) {
+        sendText(Long.parseLong(chatId), message);
     }
 }
