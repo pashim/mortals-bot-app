@@ -19,6 +19,7 @@ import javax.persistence.Table;
 @Builder(toBuilder = true)
 public class GameSessionParticipant extends BaseEntity {
     @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "game_session_id")
     private GameSessionEntity gameSession;
     @ManyToOne
     @JoinColumn(name = "user_id")
