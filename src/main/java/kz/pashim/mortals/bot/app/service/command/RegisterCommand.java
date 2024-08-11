@@ -1,23 +1,34 @@
 package kz.pashim.mortals.bot.app.service.command;
 
 import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
-import kz.pashim.mortals.bot.app.model.GameSessionState;
+import kz.pashim.mortals.bot.app.model.Channel;
+import kz.pashim.mortals.bot.app.model.ChannelEntity;
+import kz.pashim.mortals.bot.app.model.GroupEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
+import kz.pashim.mortals.bot.app.repository.ChannelRepository;
+import kz.pashim.mortals.bot.app.repository.GroupRepository;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty("telegram.api.bot.enabled")
+@Slf4j
 public class RegisterCommand extends Command {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ChannelRepository channelRepository;
+    @Autowired
+    private GroupRepository groupRepository;
     @Autowired
     @Lazy
     private TelegramBotHandler telegramClient;
@@ -37,20 +48,35 @@ public class RegisterCommand extends Command {
             return;
         }
 
-        if (userRepository.findBySourceAndChannelIdAndSourceId(GameSessionState.TELEGRAM, chatId, user.getId()).isPresent()) {
+        if (userRepository.findByGroupSourceIdAndSourceUserId(chatId, user.getId()).isPresent()) {
             telegramClient.sendText(chatId, String.format("Пользователь %s уже зарегистрирован", user.getId()));
             return;
         }
 
-        var userEntity = userRepository.save(UserEntity.builder()
-                .nickname(user.getUserName())
-                .channelId(chatId)
-                .source(GameSessionState.TELEGRAM)
-                .sourceId(user.getId())
-                .mmr(1000L)
-                .build()
+        var userEntity = createUser(user, chatId);
+        telegramClient.sendText(chatId, String.format("Пользователь %s успешно зарегистрирован",
+                userEntity.getNickname()));
+    }
+
+    private UserEntity createUser(User user, Long chatId) {
+        var channel = channelRepository.findByName(Channel.TELEGRAM.name());
+        if (channel == null) {
+            log.error("Channel not found");
+            throw new IllegalArgumentException("Channel not found");
+        }
+        var group = groupRepository.findByChannelAndSourceId(channel, chatId.toString())
+                .orElse(createGroup(channel, chatId.toString()));
+
+        return userRepository.save(
+                UserEntity.builder()
+                        .nickname(user.getUserName())
+                        .sourceUserId(user.getId().toString())
+                        .group(group)
+                        .build()
         );
-        telegramClient.sendText(chatId, String.format("Пользователь %s успешно зареган, ммр [%s]",
-                userEntity.getNickname(), userEntity.getMmr()));
+    }
+
+    private GroupEntity createGroup(ChannelEntity channel, String sourceId) {
+        return groupRepository.save(GroupEntity.builder().channel(channel).sourceId(sourceId).build());
     }
 }
