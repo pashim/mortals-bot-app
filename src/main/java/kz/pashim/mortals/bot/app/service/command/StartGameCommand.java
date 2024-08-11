@@ -28,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -117,6 +118,7 @@ public class StartGameCommand extends Command {
                         .discipline(disciplineEntity)
                         .state(GameSessionState.PREPARING)
                         .date(ZonedDateTime.now())
+                        .uuid(UUID.randomUUID())
                         .initiator(userEntity)
                         .build()
         );
