@@ -31,6 +31,7 @@ dependencies {
 
     implementation 'org.postgresql:postgresql'
     implementation 'org.flywaydb:flyway-mysql:10.17.0'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.0'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.24'
