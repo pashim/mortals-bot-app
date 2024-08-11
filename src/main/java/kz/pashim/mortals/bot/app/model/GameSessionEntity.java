@@ -38,7 +38,6 @@ public class GameSessionEntity extends BaseEntity {
     private ZonedDateTime time;
     @Column(name = "session_uuid")
     private UUID uuid;
-    private Integer result;
 
     @ManyToOne
     private UserEntity initiator;
