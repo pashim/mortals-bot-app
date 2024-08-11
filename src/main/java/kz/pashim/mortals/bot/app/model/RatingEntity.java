@@ -10,15 +10,20 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "user")
+@Table(name = "rating")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserEntity extends BaseEntity {
-    private String nickname;
-    private String title;
-    private String sourceUserId;
+public class RatingEntity extends BaseEntity {
+    private Integer mmr;
+
+    @ManyToOne
+    private ChannelEntity channel;
     @ManyToOne
     private GroupEntity group;
+    @ManyToOne
+    private DisciplineEntity discipline;
+    @ManyToOne
+    private UserEntity user;
 }

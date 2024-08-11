@@ -1,7 +1,7 @@
 package kz.pashim.mortals.bot.app.service.command;
 
 import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
-import kz.pashim.mortals.bot.app.model.Source;
+import kz.pashim.mortals.bot.app.model.GameSessionState;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class RegisterCommand extends Command {
             return;
         }
 
-        if (userRepository.findBySourceAndChannelIdAndSourceId(Source.TELEGRAM, chatId, user.getId()).isPresent()) {
+        if (userRepository.findBySourceAndChannelIdAndSourceId(GameSessionState.TELEGRAM, chatId, user.getId()).isPresent()) {
             telegramClient.sendText(chatId, String.format("Пользователь %s уже зарегистрирован", user.getId()));
             return;
         }
@@ -45,7 +45,7 @@ public class RegisterCommand extends Command {
         var userEntity = userRepository.save(UserEntity.builder()
                 .nickname(user.getUserName())
                 .channelId(chatId)
-                .source(Source.TELEGRAM)
+                .source(GameSessionState.TELEGRAM)
                 .sourceId(user.getId())
                 .mmr(1000L)
                 .build()

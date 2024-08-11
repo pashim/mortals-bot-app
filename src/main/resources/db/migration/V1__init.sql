@@ -22,11 +22,6 @@ CREATE TABLE IF NOT EXISTS "user" (
     PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "group_channel" (
-    "group_id" INTEGER REFERENCES "group",
-    "channel_id" INTEGER REFERENCES "channel"
-);
-
 CREATE TABLE IF NOT EXISTS "discipline" (
     "id" SERIAL,
     "name" VARCHAR(30) NOT NULL,
@@ -54,7 +49,7 @@ CREATE TABLE IF NOT EXISTS "game_session" (
     "group_id" INTEGER REFERENCES "group",
     "discipline_id" INTEGER REFERENCES "discipline",
     "state" game_session_state NOT NULL,
-    "date" TIMESTAMP NOT NULL,
+    "date" TIMESTAMPTZ NOT NULL,
     PRIMARY KEY ("id")
 );
 

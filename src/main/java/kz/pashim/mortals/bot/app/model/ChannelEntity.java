@@ -6,19 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "user")
+@Table(name = "channel")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserEntity extends BaseEntity {
-    private String nickname;
-    private String title;
-    private String sourceUserId;
-    @ManyToOne
-    private GroupEntity group;
+public class ChannelEntity extends BaseEntity {
+    private String name;
 }
