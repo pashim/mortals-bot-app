@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class StartGameCommand extends Command {
 
     @Override
     public void execute(Update update) {
-        if (!validationService.validate(update, command())) {
+        if (!validationService.validate(update, command(), telegramClient)) {
             return;
         }
 
@@ -91,8 +92,8 @@ public class StartGameCommand extends Command {
             log.error("Группа (channel={}, chatId={}) не найдена", channel.getId(), chatId);
             throw new GroupNotFoundException();
         }
-        var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndState(
-            channel, group.get(), discipline.get(), GameSessionState.PREPARING
+        var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndStateIn(
+            channel, group.get(), discipline.get(), List.of(GameSessionState.PREPARING)
         );
 
         if (gameSession.isPresent()) {
@@ -100,12 +101,16 @@ public class StartGameCommand extends Command {
             return;
         }
 
-        createGameSession(channel, group.get(), discipline.get(), userEntity);
-        telegramClient.sendText(chatId, String.format("Игровая сессия по %s начинается! \n\n Игроки могут присоединиться к сессии командой /join", discipline.get().getName()));
+        var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
+        telegramClient.sendText(chatId, String.format(
+                "Игровая сессия по %s начинается! \n\n Игроки могут присоединиться к сессии командой /join %s",
+                discipline.get().getName(),
+                gameSessionEntity.getUuid()
+        ));
     }
 
-    private void createGameSession(ChannelEntity channelEntity, GroupEntity groupEntity, DisciplineEntity disciplineEntity, UserEntity userEntity) {
-        gameSessionRepository.save(
+    private GameSessionEntity createGameSession(ChannelEntity channelEntity, GroupEntity groupEntity, DisciplineEntity disciplineEntity, UserEntity userEntity) {
+        return gameSessionRepository.save(
                 GameSessionEntity.builder()
                         .channel(channelEntity)
                         .group(groupEntity)

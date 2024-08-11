@@ -3,12 +3,8 @@ package kz.pashim.mortals.bot.app.service.command;
 import kz.pashim.mortals.bot.app.exception.GroupNotFoundException;
 import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
-import kz.pashim.mortals.bot.app.model.ChannelEntity;
-import kz.pashim.mortals.bot.app.model.DisciplineEntity;
 import kz.pashim.mortals.bot.app.model.GameSessionEntity;
 import kz.pashim.mortals.bot.app.model.GameSessionState;
-import kz.pashim.mortals.bot.app.model.GroupEntity;
-import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
 import kz.pashim.mortals.bot.app.repository.DisciplineRepository;
@@ -25,8 +21,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.time.ZonedDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -52,12 +46,12 @@ public class AbortGameCommand extends Command {
 
     @Override
     public String command() {
-        return "/startgame";
+        return "/abort";
     }
 
     @Override
     public void execute(Update update) {
-        if (!validationService.validate(update, command())) {
+        if (!validationService.validate(update, command(), telegramClient)) {
             return;
         }
 
@@ -91,8 +85,8 @@ public class AbortGameCommand extends Command {
             log.error("Группа (channel={}, chatId={}) не найдена", channel.getId(), chatId);
             throw new GroupNotFoundException();
         }
-        var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndState(
-            channel, group.get(), discipline.get(), GameSessionState.PREPARING
+        var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndStateIn(
+            channel, group.get(), discipline.get(), GameSessionState.liveStates()
         );
 
         if (gameSession.isEmpty()) {

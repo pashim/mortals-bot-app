@@ -8,9 +8,12 @@ import kz.pashim.mortals.bot.app.model.GroupEntity;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface GameSessionRepository extends CrudRepository<GameSessionEntity, Long> {
-    Optional<GameSessionEntity> findByChannelAndGroupAndDisciplineAndState(ChannelEntity channel, GroupEntity group, DisciplineEntity discipline, GameSessionState gameSessionState);
+    Optional<GameSessionEntity> findByChannelAndGroupAndDisciplineAndStateIn(ChannelEntity channel, GroupEntity group, DisciplineEntity discipline, List<GameSessionState> gameSessionState);
+    Optional<GameSessionEntity> findByUuid(UUID uuid);
 }

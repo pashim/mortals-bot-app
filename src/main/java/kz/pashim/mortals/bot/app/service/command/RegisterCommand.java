@@ -3,11 +3,15 @@ package kz.pashim.mortals.bot.app.service.command;
 import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
+import kz.pashim.mortals.bot.app.model.DisciplineEntity;
 import kz.pashim.mortals.bot.app.model.GroupEntity;
+import kz.pashim.mortals.bot.app.model.RatingEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
+import kz.pashim.mortals.bot.app.repository.DisciplineRepository;
 import kz.pashim.mortals.bot.app.repository.GroupRepository;
+import kz.pashim.mortals.bot.app.repository.RatingRepository;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +34,10 @@ public class RegisterCommand extends Command {
     private ChannelRepository channelRepository;
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private DisciplineRepository disciplineRepository;
+    @Autowired
+    private RatingRepository ratingRepository;
     @Autowired
     @Lazy
     private TelegramBotHandler telegramClient;
@@ -75,14 +83,33 @@ public class RegisterCommand extends Command {
                     return createGroup(channel, chatId.toString());
                 });
 
-        return userRepository.save(
+
+        var createdUser = userRepository.save(
                 userEntityBuilder
                         .group(group)
                         .build()
         );
+
+        disciplineRepository.findAll().forEach(discipline -> {
+            createUserRatingForDiscipline(createdUser, group, discipline);
+        });
+
+        return createdUser;
     }
 
     private GroupEntity createGroup(ChannelEntity channel, String sourceId) {
         return groupRepository.save(GroupEntity.builder().channel(channel).sourceId(sourceId).build());
+    }
+
+    private void createUserRatingForDiscipline(UserEntity user, GroupEntity group, DisciplineEntity discipline) {
+        ratingRepository.save(
+                RatingEntity.builder()
+                        .discipline(discipline)
+                        .user(user)
+                        .group(group)
+                        .mmr(1000)
+                        .channel(group.getChannel())
+                        .build()
+        );
     }
 }

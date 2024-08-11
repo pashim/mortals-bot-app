@@ -19,4 +19,22 @@ public class BotMessageUtils {
         }
         return null;
     }
+
+    public static String[] extractArguments(String message) {
+        if (message.startsWith("/")) {
+            // Разбиваем команду и аргументы по пробелам
+            String[] parts = message.split(" ");
+
+            if (parts.length <= 1) {
+                return null;
+            }
+
+            // Остальные части - это аргументы
+            String[] arguments = new String[parts.length - 1];
+            System.arraycopy(parts, 1, arguments, 0, arguments.length);
+
+            return arguments;
+        }
+        return null;
+    }
 }

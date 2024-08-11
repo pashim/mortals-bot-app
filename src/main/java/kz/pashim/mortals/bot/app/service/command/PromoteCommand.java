@@ -39,7 +39,7 @@ public class PromoteCommand extends Command {
 
     @Override
     public void execute(Update update) {
-        if (!validationService.validate(update, command())) {
+        if (!validationService.validate(update, command(), telegramClient)) {
             return;
         }
 

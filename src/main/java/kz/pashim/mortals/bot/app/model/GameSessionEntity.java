@@ -5,14 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "game_session")
@@ -23,6 +25,9 @@ import java.util.Set;
 public class GameSessionEntity extends BaseEntity {
     private GameSessionState state;
     private ZonedDateTime time;
+    @Column(name = "session_uuid")
+    private UUID uuid;
+    private Integer result;
 
     @ManyToOne
     private UserEntity initiator;
@@ -32,10 +37,6 @@ public class GameSessionEntity extends BaseEntity {
     private GroupEntity group;
     @ManyToOne
     private DisciplineEntity discipline;
-    @ManyToMany
-    @JoinTable(
-            name = "game_session_participant",
-            joinColumns = @JoinColumn(name = "game_session_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserEntity> participants;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "gameSession", orphanRemoval = true)
+    private Set<GameSessionParticipant> participants = new HashSet<>();
 }
