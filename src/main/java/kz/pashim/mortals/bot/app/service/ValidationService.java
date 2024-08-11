@@ -8,8 +8,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Service
 @Slf4j
-@NoArgsConstructor
-@AllArgsConstructor
 public class ValidationService {
 
     public boolean validate(Update update, String command) {

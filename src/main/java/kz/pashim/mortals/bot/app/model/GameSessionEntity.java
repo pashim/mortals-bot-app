@@ -19,7 +19,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class GameSessionEntity extends BaseEntity {
     private GameSessionState state;
     private ZonedDateTime time;

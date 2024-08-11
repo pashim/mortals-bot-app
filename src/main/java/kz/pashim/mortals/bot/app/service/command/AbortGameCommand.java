@@ -32,7 +32,7 @@ import java.time.ZonedDateTime;
 @RequiredArgsConstructor
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @Slf4j
-public class StartGameCommand extends Command {
+public class AbortGameCommand extends Command {
 
     @Autowired
     private GameSessionRepository gameSessionRepository;
@@ -66,7 +66,7 @@ public class StartGameCommand extends Command {
 
         var userEntity = userService.getUser(chatId, user.getId(), telegramClient);
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            telegramClient.sendText(chatId, "Нет прав начать игровую сессию");
+            telegramClient.sendText(chatId, "Нет прав прервать игровую сессию");
             return;
         }
 
@@ -95,24 +95,19 @@ public class StartGameCommand extends Command {
             channel, group.get(), discipline.get(), GameSessionState.PREPARING
         );
 
-        if (gameSession.isPresent()) {
-            telegramClient.sendText(chatId, String.format("Игровая сессия по %s уже имеется", discipline.get().getName()));
+        if (gameSession.isEmpty()) {
+            telegramClient.sendText(chatId, String.format("Активная игровая сессия по %s не найдена", discipline.get().getName()));
             return;
         }
 
-        createGameSession(channel, group.get(), discipline.get(), userEntity);
-        telegramClient.sendText(chatId, String.format("Игровая сессия по %s начинается! \n\n Игроки могут присоединиться к сессии командой /join", discipline.get().getName()));
+        abortGameSession(gameSession.get());
+        telegramClient.sendText(chatId, String.format("Игровая сессия по %s прервана", discipline.get().getName()));
     }
 
-    private void createGameSession(ChannelEntity channelEntity, GroupEntity groupEntity, DisciplineEntity disciplineEntity, UserEntity userEntity) {
+    private void abortGameSession(GameSessionEntity gameSessionEntity) {
         gameSessionRepository.save(
-                GameSessionEntity.builder()
-                        .channel(channelEntity)
-                        .group(groupEntity)
-                        .discipline(disciplineEntity)
-                        .state(GameSessionState.PREPARING)
-                        .time(ZonedDateTime.now())
-                        .initiator(userEntity)
+                gameSessionEntity.toBuilder()
+                        .state(GameSessionState.ABORTED)
                         .build()
         );
     }
