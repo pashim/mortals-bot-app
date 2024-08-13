@@ -4,6 +4,7 @@ import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.GameSessionEntity;
 import kz.pashim.mortals.bot.app.model.GameSessionParticipant;
 import kz.pashim.mortals.bot.app.model.GameSessionState;
+import kz.pashim.mortals.bot.app.model.RatingEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.repository.GameSessionRepository;
 import kz.pashim.mortals.bot.app.repository.RatingRepository;
@@ -24,6 +25,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static kz.pashim.mortals.bot.app.util.TeamRatingUtils.RATING_DIFF;
 
 @Component
 @RequiredArgsConstructor
@@ -88,26 +92,29 @@ public class JoinGameCommand extends Command {
             telegramClient.sendText(chatId, "Нет свободных слотов");
             return;
         }
-        LOCK.lock();
-        var updatedGameSessionEntity = joinGameSession(gameSessionEntity.get(), userEntity);
-        var freeSlots = getFreeSlots(updatedGameSessionEntity);
-        if (freeSlots == 0) {
-            updatedGameSessionEntity = autoStartGame(updatedGameSessionEntity);
-            telegramClient.sendText(chatId, String.format(
-                    "Все участники собрались, игра по %s начинается, игроки были автоматом распределены на команды \n\n %s \n\n прошу всех игроков зайти в лобби. \n\n по окончанию игры участники должны внести результат командой /result %s (1 или 2)",
-                    updatedGameSessionEntity.getDiscipline().getName(),
-                    buildDividedTeamsMessage(updatedGameSessionEntity),
-                    updatedGameSessionEntity.getUuid()
-
-            ));
-        } else {
-            telegramClient.sendText(chatId, String.format(
-                    "Игрок %s присоединяется к лобби, осталось %d свободных слотов",
-                    userEntity.getNickname(),
-                    freeSlots
-            ));
+        try {
+            LOCK.lock();
+            var updatedGameSessionEntity = joinGameSession(gameSessionEntity.get(), userEntity);
+            var freeSlots = getFreeSlots(updatedGameSessionEntity);
+            if (freeSlots == 0) {
+                updatedGameSessionEntity = autoStartGame(updatedGameSessionEntity);
+                telegramClient.sendText(chatId, String.format(
+                        "Все участники собрались, игра по %s начинается, игроки были автоматом распределены на команды \n\n%s \n\nпрошу всех игроков зайти в лобби. \n\nпо окончанию игры участники должны внести результат командой: \n/result %s (%s)",
+                        updatedGameSessionEntity.getDiscipline().getName(),
+                        buildDividedTeamsMessage(updatedGameSessionEntity),
+                        updatedGameSessionEntity.getUuid(),
+                        IntStream.range(1, updatedGameSessionEntity.getDiscipline().getTeamsCount()).boxed().map(Object::toString).collect(Collectors.joining("/"))
+                ));
+            } else {
+                telegramClient.sendText(chatId, String.format(
+                        "Игрок %s присоединяется к лобби, осталось %d свободных слотов",
+                        userEntity.getNickname(),
+                        freeSlots
+                ));
+            }
+        } finally {
+            LOCK.unlock();
         }
-        LOCK.unlock();
     }
 
     private GameSessionEntity autoStartGame(GameSessionEntity gameSessionEntity) {
@@ -150,11 +157,30 @@ public class JoinGameCommand extends Command {
                 .collect(Collectors.groupingBy(GameSessionParticipant::getTeamNumber));
 
         teams.forEach((key, value) -> {
+            stringBuilder.append(key).append(": ");
             stringBuilder.append(value.stream()
-                    .map(it -> it.getUser().getNickname())
+                    .map(gameSessionParticipant -> {
+                        var rating = getRatingByChannelAndGroupAndDisciplineAndUser(
+                                gameSessionEntity, gameSessionParticipant
+                        );
+                        return String.format(
+                                "%s: [%s]",
+                                gameSessionParticipant.getUser().getNickname(),
+                                rating.getMmr()
+                        );
+                    })
                     .collect(Collectors.joining(", ")));
             stringBuilder.append("\n");
         });
         return stringBuilder.toString();
+    }
+
+    private RatingEntity getRatingByChannelAndGroupAndDisciplineAndUser(GameSessionEntity gameSessionEntity, GameSessionParticipant it) {
+        return ratingRepository.findByChannelAndGroupAndDisciplineAndUser(
+                gameSessionEntity.getChannel(),
+                gameSessionEntity.getGroup(),
+                gameSessionEntity.getDiscipline(),
+                it.getUser()
+        );
     }
 }

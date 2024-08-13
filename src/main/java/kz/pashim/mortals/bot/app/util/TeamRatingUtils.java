@@ -30,7 +30,7 @@ public class TeamRatingUtils {
         }
     }
 
-    public static void result(List<Pair<GameSessionParticipant, RatingEntity>> participants, Integer winner) {
+    public static List<Pair<GameSessionParticipant, RatingEntity>> result(List<Pair<GameSessionParticipant, RatingEntity>> participants, Integer winner) {
         if (winner == null) {
             throw new IllegalGameResultException();
         }
@@ -39,5 +39,7 @@ public class TeamRatingUtils {
             int diff = entry.getFirst().getTeamNumber().equals(winner) ? RATING_DIFF : -RATING_DIFF;
             entry.getSecond().setMmr(entry.getSecond().getMmr() + diff);
         });
+
+        return participants;
     }
 }

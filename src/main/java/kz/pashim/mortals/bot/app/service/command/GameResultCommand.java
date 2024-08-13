@@ -24,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static kz.pashim.mortals.bot.app.util.TeamRatingUtils.RATING_DIFF;
@@ -33,6 +34,8 @@ import static kz.pashim.mortals.bot.app.util.TeamRatingUtils.RATING_DIFF;
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @Slf4j
 public class GameResultCommand extends Command {
+
+    private static ReentrantLock LOCK = new ReentrantLock();
 
     public static String COMMAND = "/result";
 
@@ -81,20 +84,26 @@ public class GameResultCommand extends Command {
             return;
         }
 
-        var result = Integer.parseInt(arguments[1]);
-        var updatedGameSessionEntity = finishGameSession(gameSessionEntity.get(), result);
-        telegramClient.sendText(chatId, String.format(
-                "Игровая сессия по %s завершена! \n\n %s",
-                gameSessionEntity.get().getDiscipline().getName(),
-                buildGameSessionResultMessage(updatedGameSessionEntity, result)
-        ));
+        try {
+            LOCK.lock();
+            var result = Integer.parseInt(arguments[1]);
+            var updatedGameSessionEntity = finishGameSession(gameSessionEntity.get(), result);
+            telegramClient.sendText(chatId, String.format(
+                    "Игровая сессия по %s завершена! \n\n%s",
+                    gameSessionEntity.get().getDiscipline().getName(),
+                    buildGameSessionResultMessage(updatedGameSessionEntity, result)
+            ));
+        } finally {
+            LOCK.unlock();
+        }
     }
 
     private GameSessionEntity finishGameSession(GameSessionEntity gameSessionEntity, Integer result) {
-        TeamRatingUtils.result(gameSessionEntity.getParticipants().stream()
+        var gameParticipants = TeamRatingUtils.result(gameSessionEntity.getParticipants().stream()
                 .map(it -> Pair.of(it, getRatingByChannelAndGroupAndDisciplineAndUser(gameSessionEntity, it)))
                 .collect(Collectors.toList()), result);
 
+        ratingRepository.saveAll(gameParticipants.stream().map(Pair::getSecond).collect(Collectors.toList()));
         return gameSessionRepository.save(
                 gameSessionEntity.toBuilder()
                         .state(GameSessionState.FINISHED)
