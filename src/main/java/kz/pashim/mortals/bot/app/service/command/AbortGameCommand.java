@@ -102,6 +102,7 @@ public class AbortGameCommand extends Command {
         gameSessionRepository.save(
                 gameSessionEntity.toBuilder()
                         .state(GameSessionState.ABORTED)
+                        .participants(gameSessionEntity.getParticipants())
                         .build()
         );
     }

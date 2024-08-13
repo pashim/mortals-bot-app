@@ -48,6 +48,6 @@ public class GameSessionEntity extends BaseEntity {
     private GroupEntity group;
     @ManyToOne
     private DisciplineEntity discipline;
-    @OneToMany(cascade = { CascadeType.PERSIST }, fetch = FetchType.EAGER, mappedBy = "gameSession", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "gameSession", orphanRemoval = true)
     private Set<GameSessionParticipant> participants = new HashSet<>();
 }
