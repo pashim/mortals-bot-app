@@ -17,4 +17,9 @@ import javax.persistence.Table;
 public class DisciplineEntity extends BaseEntity {
     private String name;
     private Integer teamMembersCount;
+    private Integer teamsCount;
+
+    public Integer getMaxSlots() {
+        return teamsCount * teamMembersCount;
+    }
 }

@@ -80,8 +80,12 @@ public class JoinGameCommand extends Command {
             telegramClient.sendText(chatId, "Нельзя присоединиться к завершенной игровой сессии");
             return;
         }
-        if (gameSessionEntity.get().getParticipants().stream().map(GameSessionParticipant::getUser).collect(Collectors.toSet()).contains(userEntity)) {
+        if (gameSessionEntity.get().getParticipants().stream().map(it -> it.getUser().getSourceUserId()).collect(Collectors.toSet()).contains(userEntity.getSourceUserId())) {
             telegramClient.sendText(chatId, String.format("Пользователь %s уже находится в лобби", userEntity.getNickname()));
+            return;
+        }
+        if (gameSessionEntity.get().getParticipants().size() >= gameSessionEntity.get().getDiscipline().getMaxSlots()) {
+            telegramClient.sendText(chatId, "Нет свободных слотов");
             return;
         }
         LOCK.lock();
@@ -134,7 +138,8 @@ public class JoinGameCommand extends Command {
     }
 
     private Integer getFreeSlots(GameSessionEntity gameSessionEntity) {
-        return gameSessionEntity.getDiscipline().getTeamMembersCount() - gameSessionEntity.getParticipants().size();
+        var discipline = gameSessionEntity.getDiscipline();
+        return discipline.getTeamMembersCount() * discipline.getTeamsCount() - gameSessionEntity.getParticipants().size();
     }
 
     private String buildDividedTeamsMessage(GameSessionEntity gameSessionEntity) {
