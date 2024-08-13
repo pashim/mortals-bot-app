@@ -6,18 +6,12 @@ import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.DisciplineEntity;
 import kz.pashim.mortals.bot.app.model.GroupEntity;
-import kz.pashim.mortals.bot.app.model.RatingEntity;
-import kz.pashim.mortals.bot.app.model.UserEntity;
-import kz.pashim.mortals.bot.app.model.UserRole;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
 import kz.pashim.mortals.bot.app.repository.DisciplineRepository;
 import kz.pashim.mortals.bot.app.repository.GroupRepository;
 import kz.pashim.mortals.bot.app.repository.RatingRepository;
-import kz.pashim.mortals.bot.app.repository.UserRepository;
-import kz.pashim.mortals.bot.app.service.UserService;
 import kz.pashim.mortals.bot.app.service.ValidationService;
 import kz.pashim.mortals.bot.app.util.BotMessageUtils;
-import kz.pashim.mortals.bot.app.util.UserRoleUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +20,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
