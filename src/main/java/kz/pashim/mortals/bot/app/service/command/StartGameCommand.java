@@ -80,7 +80,7 @@ public class StartGameCommand extends Command {
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            telegramClient.sendText(chatId, String.format("Дисциплина %s не найден", discipline));
+            telegramClient.sendText(chatId, String.format("Дисциплина %s не найден", disciplineName));
             return;
         }
 
@@ -104,8 +104,11 @@ public class StartGameCommand extends Command {
 
         var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
         telegramClient.sendText(chatId, String.format(
-                "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой \n/join %s",
-                discipline.get().getName(),
+                "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой",
+                discipline.get().getName()
+        ));
+        telegramClient.sendText(chatId, String.format(
+                "/join %s",
                 gameSessionEntity.getUuid()
         ));
     }

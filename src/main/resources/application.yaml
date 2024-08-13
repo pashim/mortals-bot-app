@@ -24,3 +24,8 @@ telegram:
       enabled: ${TELEGRAM_BOT_ENABLED}
       name: ${TELEGRAM_BOT_NAME}
       token: ${TELEGRAM_BOT_TOKEN}
+
+mortals:
+  bot:
+    leaderboard:
+      maxPlayersToDisplay: 10
