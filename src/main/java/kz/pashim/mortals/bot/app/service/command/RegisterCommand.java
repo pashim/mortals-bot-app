@@ -3,7 +3,6 @@ package kz.pashim.mortals.bot.app.service.command;
 import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.configuration.properties.MortalsBotProperties;
 import kz.pashim.mortals.bot.app.exception.ChannelNotFoundException;
-import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
 import kz.pashim.mortals.bot.app.model.DisciplineEntity;
@@ -11,25 +10,24 @@ import kz.pashim.mortals.bot.app.model.GroupEntity;
 import kz.pashim.mortals.bot.app.model.RatingEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
+import kz.pashim.mortals.bot.app.model.event.BotEvent;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
 import kz.pashim.mortals.bot.app.repository.DisciplineRepository;
 import kz.pashim.mortals.bot.app.repository.GroupRepository;
 import kz.pashim.mortals.bot.app.repository.RatingRepository;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import kz.pashim.mortals.bot.app.service.BotCallbackStrategy;
+import kz.pashim.mortals.bot.app.service.UserService;
+import kz.pashim.mortals.bot.app.service.ValidationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
 
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @Slf4j
-public class RegisterCommand extends Command {
+public class RegisterCommand extends AbstractCommand {
+    public static final String COMMAND = "/register";
 
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
@@ -38,47 +36,64 @@ public class RegisterCommand extends Command {
     private final RatingRepository ratingRepository;
     private final MortalsMessageSource messageSource;
     private final MortalsBotProperties mortalsBotProperties;
-    @Autowired
-    @Lazy
-    private TelegramBotHandler telegramClient;
+
+    public RegisterCommand(
+            BotCallbackStrategy botCallbackStrategy,
+            ValidationService validationService,
+            UserService userService,
+            UserRepository userRepository,
+            ChannelRepository channelRepository,
+            GroupRepository groupRepository,
+            DisciplineRepository disciplineRepository,
+            RatingRepository ratingRepository,
+            MortalsMessageSource messageSource,
+            MortalsBotProperties mortalsBotProperties
+    ) {
+        super(botCallbackStrategy, validationService, userService);
+        this.userRepository = userRepository;
+        this.channelRepository = channelRepository;
+        this.groupRepository = groupRepository;
+        this.disciplineRepository = disciplineRepository;
+        this.ratingRepository = ratingRepository;
+        this.messageSource = messageSource;
+        this.mortalsBotProperties = mortalsBotProperties;
+    }
 
     @Override
     public String command() {
-        return "/register";
+        return COMMAND;
     }
 
     @Override
-    public void execute(Update update) {
-        var user = update.getMessage().getFrom();
-        var chatId = update.getMessage().getChatId();
-
+    public void handle(BotEvent event) {
+        var chatId = event.getChatId();
         if (chatId == null) {
-            telegramClient.sendText(user.getId(), messageSource.getMessage("bot.message.register.not.in.group"));
+            getBotCallback(event).sendMessage(event.getUserId(), messageSource.getMessage("bot.message.register.not.in.group"));
             return;
         }
 
-        if (userRepository.findByGroupSourceIdAndSourceUserId(chatId.toString(), user.getId().toString()).isPresent()) {
-            telegramClient.sendText(chatId, messageSource.getMessage("bot.message.register.user.already.exists", user.getUserName()));
+        if (userRepository.findByGroupSourceIdAndSourceUserId(chatId, event.getUserId()).isPresent()) {
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.register.user.already.exists", event.getNickname()));
             return;
         }
 
-        var userEntity = createUser(user, chatId);
-        telegramClient.sendText(chatId, messageSource.getMessage("bot.message.register.success", userEntity.getNickname()));
+        var userEntity = createUser(event);
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.register.success", userEntity.getNickname()));
     }
 
-    private UserEntity createUser(User user, Long chatId) {
+    private UserEntity createUser(BotEvent event) {
         var channel = channelRepository.findByName(Channel.TELEGRAM.name());
         if (channel == null) {
             throw new ChannelNotFoundException(messageSource.getMessage("error.channel.not.found"));
         }
         var userEntityBuilder = UserEntity.builder()
-                .nickname(user.getUserName())
-                .sourceUserId(user.getId().toString());
+                .nickname(event.getNickname())
+                .sourceUserId(event.getUserId());
 
-        var group = groupRepository.findByChannelAndSourceId(channel, chatId.toString())
+        var group = groupRepository.findByChannelAndSourceId(channel, event.getChatId())
                 .orElseGet(() -> {
                     userEntityBuilder.role(UserRole.ADMIN);
-                    return createGroup(channel, chatId.toString());
+                    return createGroup(channel, event.getChatId());
                 });
 
 

@@ -1,12 +1,12 @@
 package kz.pashim.mortals.bot.app.listener;
 
-import kz.pashim.mortals.bot.app.exception.BotException;
-import kz.pashim.mortals.bot.app.service.command.CommandRegistry;
-import kz.pashim.mortals.bot.app.util.BotMessageUtils;
+import kz.pashim.mortals.bot.app.model.Channel;
+import kz.pashim.mortals.bot.app.model.event.BotEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -20,7 +20,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @RequiredArgsConstructor
 public class TelegramBotHandler extends TelegramLongPollingBot implements BotCallback {
 
-    private final CommandRegistry commandRegistry;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${telegram.api.bot.name}")
     private String botName;
@@ -43,27 +43,25 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
     public void onUpdateReceived(Update update) {
         var msg = update.getMessage();
         log.debug("Received telegram event with message: {}", msg);
-        var user = msg.getFrom();
-
-        var command = commandRegistry.getCommand(BotMessageUtils.extractCommand(msg.getText()));
-        if (command == null) {
-            sendText(user.getId(), "хз че ты высрал...");
-            return;
-        }
-        try {
-            command.execute(update);
-        } catch (BotException exception) {
-            exception.printStackTrace();
-            sendText(msg.getChatId() != null ? msg.getChatId() : user.getId(), exception.getMessage());
-        }
+        applicationEventPublisher.publishEvent(new BotEvent(
+                this,
+                getChannel(),
+                update,
+                msg.getChatId() == null ? null : msg.getChatId().toString(),
+                msg.getFrom() == null ? null : msg.getFrom().getId().toString(),
+                msg.getText(),
+                msg.getFrom() == null ? null : msg.getFrom().getUserName()
+        ));
     }
 
-    public void sendText(Long who, String what){
-        SendMessage sm = SendMessage.builder()
-                .chatId(who.toString())
-                .text(what).build();
+    public void sendText(Long chatId, String message) {
         try {
-            execute(sm);
+            execute(
+                    SendMessage.builder()
+                            .chatId(chatId.toString())
+                            .text(message)
+                            .build()
+            );
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
@@ -72,5 +70,10 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
     @Override
     public void sendMessage(String chatId, String message) {
         sendText(Long.parseLong(chatId), message);
+    }
+
+    @Override
+    public Channel getChannel() {
+        return Channel.TELEGRAM;
     }
 }

@@ -1,8 +1,8 @@
 package kz.pashim.mortals.bot.app.service.command;
 
-import org.telegram.telegrambots.meta.api.objects.Update;
+import kz.pashim.mortals.bot.app.model.event.BotEvent;
 
 public abstract class Command {
-    public abstract void execute(Update update);
+    public abstract void execute(BotEvent event);
     public abstract String command();
 }

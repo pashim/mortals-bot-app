@@ -1,7 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
 import kz.pashim.mortals.bot.app.exception.GroupNotFoundException;
-import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
 import kz.pashim.mortals.bot.app.model.DisciplineEntity;
@@ -10,84 +9,82 @@ import kz.pashim.mortals.bot.app.model.GameSessionState;
 import kz.pashim.mortals.bot.app.model.GroupEntity;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
+import kz.pashim.mortals.bot.app.model.event.BotEvent;
 import kz.pashim.mortals.bot.app.repository.ChannelRepository;
 import kz.pashim.mortals.bot.app.repository.DisciplineRepository;
 import kz.pashim.mortals.bot.app.repository.GameSessionRepository;
 import kz.pashim.mortals.bot.app.repository.GroupRepository;
+import kz.pashim.mortals.bot.app.service.BotCallbackStrategy;
 import kz.pashim.mortals.bot.app.service.UserService;
 import kz.pashim.mortals.bot.app.service.ValidationService;
 import kz.pashim.mortals.bot.app.util.BotMessageUtils;
 import kz.pashim.mortals.bot.app.util.UserRoleUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @Slf4j
-public class StartGameCommand extends Command {
+public class StartGameCommand extends AbstractCommand {
+    public static final String COMMAND = "/startgame";
 
-    @Autowired
-    private GameSessionRepository gameSessionRepository;
-    @Autowired
-    private DisciplineRepository disciplineRepository;
-    @Autowired
-    private ChannelRepository channelRepository;
-    @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
-    @Lazy
-    private TelegramBotHandler telegramClient;
-    @Autowired
-    private ValidationService validationService;
-    @Autowired
-    private UserService userService;
+    private final GameSessionRepository gameSessionRepository;
+    private final DisciplineRepository disciplineRepository;
+    private final ChannelRepository channelRepository;
+    private final GroupRepository groupRepository;
 
-    @Override
-    public String command() {
-        return "/startgame";
+    public StartGameCommand(
+            BotCallbackStrategy botCallbackStrategy,
+            ValidationService validationService,
+            UserService userService,
+            GameSessionRepository gameSessionRepository,
+            DisciplineRepository disciplineRepository,
+            ChannelRepository channelRepository,
+            GroupRepository groupRepository
+    ) {
+        super(botCallbackStrategy, validationService, userService);
+        this.gameSessionRepository = gameSessionRepository;
+        this.disciplineRepository = disciplineRepository;
+        this.channelRepository = channelRepository;
+        this.groupRepository = groupRepository;
     }
 
     @Override
-    public void execute(Update update) {
-        if (!validationService.validate(update, command(), telegramClient)) {
-            return;
-        }
+    public String command() {
+        return COMMAND;
+    }
 
-        var user = update.getMessage().getFrom();
-        var chatId = update.getMessage().getChatId();
+    @Override
+    public void handle(BotEvent event) {
+        var chatId = event.getChatId();
 
-        var userEntity = userService.getUser(chatId.toString(), user.getId().toString(), telegramClient);
+        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            telegramClient.sendText(chatId, "Нет прав начать игровую сессию");
+            getBotCallback(event).sendMessage(chatId, "Нет прав начать игровую сессию");
             return;
         }
 
-        var disciplineName = BotMessageUtils.extractFirstArgument(update.getMessage().getText());
+        var disciplineName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (disciplineName == null) {
-            telegramClient.sendText(chatId, "Дисциплина не найдена");
+            getBotCallback(event).sendMessage(chatId, "Дисциплина не найдена");
             return;
         }
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            telegramClient.sendText(chatId, String.format("Дисциплина %s не найден", disciplineName));
+            getBotCallback(event).sendMessage(chatId, String.format("Дисциплина %s не найден", disciplineName));
             return;
         }
 
         var channel = channelRepository.findByName(Channel.TELEGRAM.name());
         var group = groupRepository.findByChannelAndSourceId(
-                channelRepository.findByName(Channel.TELEGRAM.name()),
-                chatId.toString()
+                channelRepository.findByName(event.getChannel().name()),
+                chatId
         );
         if (group.isEmpty()) {
             log.error("Группа (channel={}, chatId={}) не найдена", channel.getId(), chatId);
@@ -98,16 +95,16 @@ public class StartGameCommand extends Command {
         );
 
         if (gameSession.isPresent()) {
-            telegramClient.sendText(chatId, String.format("Игровая сессия по %s уже имеется", discipline.get().getName()));
+            getBotCallback(event).sendMessage(chatId, String.format("Игровая сессия по %s уже имеется", discipline.get().getName()));
             return;
         }
 
         var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
-        telegramClient.sendText(chatId, String.format(
+        getBotCallback(event).sendMessage(chatId, String.format(
                 "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой",
                 discipline.get().getName()
         ));
-        telegramClient.sendText(chatId, String.format(
+        getBotCallback(event).sendMessage(chatId, String.format(
                 "/join %s",
                 gameSessionEntity.getUuid()
         ));

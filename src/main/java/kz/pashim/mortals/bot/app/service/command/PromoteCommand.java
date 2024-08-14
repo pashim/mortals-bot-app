@@ -1,71 +1,64 @@
 package kz.pashim.mortals.bot.app.service.command;
 
-import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
+import kz.pashim.mortals.bot.app.model.event.BotEvent;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
+import kz.pashim.mortals.bot.app.service.BotCallbackStrategy;
 import kz.pashim.mortals.bot.app.service.UserService;
 import kz.pashim.mortals.bot.app.service.ValidationService;
 import kz.pashim.mortals.bot.app.util.BotMessageUtils;
 import kz.pashim.mortals.bot.app.util.UserRoleUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty("telegram.api.bot.enabled")
 @Slf4j
-public class PromoteCommand extends Command {
+public class PromoteCommand extends AbstractCommand {
+    public static final String COMMAND = "/promote";
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    @Lazy
-    private TelegramBotHandler telegramClient;
-    @Autowired
-    private ValidationService validationService;
-    @Autowired
-    private UserService userService;
+    private final UserRepository userRepository;
 
-    @Override
-    public String command() {
-        return "/promote";
+    public PromoteCommand(
+            BotCallbackStrategy botCallbackStrategy,
+            ValidationService validationService,
+            UserService userService,
+            UserRepository userRepository
+    ) {
+        super(botCallbackStrategy, validationService, userService);
+        this.userRepository = userRepository;
     }
 
     @Override
-    public void execute(Update update) {
-        if (!validationService.validate(update, command(), telegramClient)) {
-            return;
-        }
+    public String command() {
+        return COMMAND;
+    }
 
-        var user = update.getMessage().getFrom();
-        var chatId = update.getMessage().getChatId();
-
-        var userEntity = userService.getUser(chatId.toString(), user.getId().toString(), telegramClient);
+    @Override
+    public void handle(BotEvent event) {
+        var chatId = event.getChatId();
+        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.ADMIN)) {
-            telegramClient.sendText(chatId, "Только администраторы канала могут назначать роли");
+            getBotCallback(event).sendMessage(chatId, "Только администраторы канала могут назначать роли");
             return;
         }
 
-        var userName = BotMessageUtils.extractFirstArgument(update.getMessage().getText());
+        var userName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (userName == null) {
-            telegramClient.sendText(chatId, "Пользователь не найден");
+            getBotCallback(event).sendMessage(chatId, "Пользователь не найден");
             return;
         }
 
         var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId.toString(), userName);
         if (userToPromote.isEmpty()) {
-            telegramClient.sendText(chatId, String.format("Пользователь %s не найден", userName));
+            getBotCallback(event).sendMessage(chatId, String.format("Пользователь %s не найден", userName));
             return;
         }
 
         promote(userToPromote.get(), UserRole.MODERATOR);
-        telegramClient.sendText(chatId, String.format("Пользователю %s назначена роль: %s", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
+        getBotCallback(event).sendMessage(chatId, String.format("Пользователю %s назначена роль: %s", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
     }
 
     private void promote(UserEntity user, UserRole userRole) {
