@@ -59,6 +59,7 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
             execute(
                     SendMessage.builder()
                             .chatId(chatId.toString())
+                            .parseMode("MarkdownV2")
                             .text(message)
                             .build()
             );

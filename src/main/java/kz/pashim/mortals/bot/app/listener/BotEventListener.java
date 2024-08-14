@@ -19,14 +19,16 @@ public class BotEventListener implements ApplicationListener<BotEvent> {
     @Override
     public void onApplicationEvent(BotEvent event) {
         var command = commandRegistry.getCommand(BotMessageUtils.extractCommand(event.getCommand()));
-        try {
-            command.execute(event);
-        } catch (BotException exception) {
-            exception.printStackTrace();
-            botCallbackStrategy.getBotCallback(event.getChannel()).sendMessage(
-                    event.getChatId() != null ? event.getChatId() : event.getUserId(),
-                    exception.getMessage()
-            );
+        if (command != null) {
+            try {
+                command.execute(event);
+            } catch (BotException exception) {
+                exception.printStackTrace();
+                botCallbackStrategy.getBotCallback(event.getChannel()).sendMessage(
+                        event.getChatId() != null ? event.getChatId() : event.getUserId(),
+                        exception.getMessage()
+                );
+            }
         }
     }
 }
