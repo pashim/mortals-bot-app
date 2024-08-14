@@ -42,7 +42,7 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
     @Transactional
     public void onUpdateReceived(Update update) {
         var msg = update.getMessage();
-        log.info("Received telegram event with message: {}", msg);
+        log.debug("Received telegram event with message: {}", msg);
         var user = msg.getFrom();
 
         var command = commandRegistry.getCommand(BotMessageUtils.extractCommand(msg.getText()));
@@ -52,7 +52,10 @@ public class TelegramBotHandler extends TelegramLongPollingBot implements BotCal
         }
         try {
             command.execute(update);
-        } catch (BotException ignore) { }
+        } catch (BotException exception) {
+            exception.printStackTrace();
+            sendText(msg.getChatId() != null ? msg.getChatId() : user.getId(), exception.getMessage());
+        }
     }
 
     public void sendText(Long who, String what){

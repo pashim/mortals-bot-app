@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MortalsBotProperties {
+    private Integer defaultMmrAssigned;
     private Leaderboard leaderboard;
 
     @Data

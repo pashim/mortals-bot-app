@@ -1,5 +1,8 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
+import kz.pashim.mortals.bot.app.configuration.properties.MortalsBotProperties;
+import kz.pashim.mortals.bot.app.exception.ChannelNotFoundException;
 import kz.pashim.mortals.bot.app.listener.TelegramBotHandler;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
@@ -28,16 +31,13 @@ import org.telegram.telegrambots.meta.api.objects.User;
 @Slf4j
 public class RegisterCommand extends Command {
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ChannelRepository channelRepository;
-    @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
-    private DisciplineRepository disciplineRepository;
-    @Autowired
-    private RatingRepository ratingRepository;
+    private final UserRepository userRepository;
+    private final ChannelRepository channelRepository;
+    private final GroupRepository groupRepository;
+    private final DisciplineRepository disciplineRepository;
+    private final RatingRepository ratingRepository;
+    private final MortalsMessageSource messageSource;
+    private final MortalsBotProperties mortalsBotProperties;
     @Autowired
     @Lazy
     private TelegramBotHandler telegramClient;
@@ -53,25 +53,23 @@ public class RegisterCommand extends Command {
         var chatId = update.getMessage().getChatId();
 
         if (chatId == null) {
-            telegramClient.sendText(user.getId(), "Что бы зарегистрироваться в лиге, вам нужно запустить эту же команду из группового чата");
+            telegramClient.sendText(user.getId(), messageSource.getMessage("bot.message.register.not.in.group"));
             return;
         }
 
         if (userRepository.findByGroupSourceIdAndSourceUserId(chatId.toString(), user.getId().toString()).isPresent()) {
-            telegramClient.sendText(chatId, String.format("Пользователь %s уже зарегистрирован", user.getUserName()));
+            telegramClient.sendText(chatId, messageSource.getMessage("bot.message.register.user.already.exists", user.getUserName()));
             return;
         }
 
         var userEntity = createUser(user, chatId);
-        telegramClient.sendText(chatId, String.format("Пользователь %s успешно зарегистрирован",
-                userEntity.getNickname()));
+        telegramClient.sendText(chatId, messageSource.getMessage("bot.message.register.success", userEntity.getNickname()));
     }
 
     private UserEntity createUser(User user, Long chatId) {
         var channel = channelRepository.findByName(Channel.TELEGRAM.name());
         if (channel == null) {
-            log.error("Channel not found");
-            throw new IllegalArgumentException("Channel not found");
+            throw new ChannelNotFoundException(messageSource.getMessage("error.channel.not.found"));
         }
         var userEntityBuilder = UserEntity.builder()
                 .nickname(user.getUserName())
@@ -107,7 +105,7 @@ public class RegisterCommand extends Command {
                         .discipline(discipline)
                         .user(user)
                         .group(group)
-                        .mmr(1000)
+                        .mmr(mortalsBotProperties.getDefaultMmrAssigned())
                         .channel(group.getChannel())
                         .build()
         );

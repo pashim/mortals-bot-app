@@ -27,5 +27,6 @@ telegram:
 
 mortals:
   bot:
+    default-mmr-assigned: 1000
     leaderboard:
-      maxPlayersToDisplay: 10
+      max-players-to-display: 10
