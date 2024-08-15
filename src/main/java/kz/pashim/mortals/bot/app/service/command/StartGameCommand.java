@@ -66,9 +66,9 @@ public class StartGameCommand extends AbstractCommand {
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
 
-        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
+        var userEntity = userService.getUser(chatId, event.getUserId());
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.no.permission"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.unauthorized"));
             return;
         }
 
@@ -80,7 +80,7 @@ public class StartGameCommand extends AbstractCommand {
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", disciplineName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found.with.name", disciplineName));
             return;
         }
 
@@ -98,12 +98,12 @@ public class StartGameCommand extends AbstractCommand {
         );
 
         if (gameSession.isPresent()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.game.session.already.available", discipline.get().getName()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.session.already.exists", discipline.get().getName()));
             return;
         }
 
         var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
-        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.game.session.begin", discipline.get().getName()));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.success", discipline.get().getName()));
         getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.join", gameSessionEntity.getUuid()));
     }
 

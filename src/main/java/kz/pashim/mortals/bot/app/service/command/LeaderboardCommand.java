@@ -69,7 +69,7 @@ public class LeaderboardCommand extends AbstractCommand {
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", disciplineName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found.with.name", disciplineName));
             return;
         }
 
@@ -81,7 +81,7 @@ public class LeaderboardCommand extends AbstractCommand {
         }
 
         getBotCallback(event).sendMessage(chatId,
-                messageSource.getMessage("bot.message.leaderboard.command.by.discipline",
+                messageSource.getMessage("bot.message.leaderboard.success",
                 discipline.get().getName(),
                 buildLeaderBoardMessage(discipline.get(), group.get()))
         );

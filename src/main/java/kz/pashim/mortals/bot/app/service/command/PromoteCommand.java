@@ -43,26 +43,26 @@ public class PromoteCommand extends AbstractCommand {
     @Override
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
-        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
+        var userEntity = userService.getUser(chatId, event.getUserId());
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.ADMIN)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.assign.roles"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.unauthorized"));
             return;
         }
 
         var userName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (userName == null) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.user.not.found"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.user.not.found"));
             return;
         }
 
         var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId, userName);
         if (userToPromote.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", userName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.user.not.found.with.name", userName));
             return;
         }
 
         promote(userToPromote.get(), UserRole.MODERATOR);
-        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.role.assigned", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.success", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
     }
 
     private void promote(UserEntity user, UserRole userRole) {

@@ -1,7 +1,7 @@
 package kz.pashim.mortals.bot.app.service;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.exception.UserNotFoundException;
-import kz.pashim.mortals.bot.app.listener.BotCallback;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,18 +14,14 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final MortalsMessageSource messageSource;
 
-    public UserEntity getUser(String groupId, String sourceId, BotCallback callback) {
-        var user = userRepository.findByGroupSourceIdAndSourceUserId(
-                groupId, sourceId
-        );
-
+    public UserEntity getUser(String groupId, String sourceId) {
+        var user = userRepository.findByGroupSourceIdAndSourceUserId(groupId, sourceId);
         if (user.isEmpty()) {
-            var errorMessage = "Пользователь не найден";
-            callback.sendMessage(groupId.toString(), errorMessage);
-            throw new UserNotFoundException();
+            var errorMessage = messageSource.getMessage("bot.message.common.user.not.found");
+            throw new UserNotFoundException(errorMessage);
         }
-
         return user.get();
     }
 }

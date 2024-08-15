@@ -59,10 +59,10 @@ public class JoinGameCommand extends AbstractCommand {
     @Override
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
-        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
+        var userEntity = userService.getUser(chatId, event.getUserId());
         var sessionUuid = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (sessionUuid == null) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.game.command.session.uuid.not.found"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.session.uuid.not.found"));
             return;
         }
 
@@ -72,19 +72,19 @@ public class JoinGameCommand extends AbstractCommand {
         } catch (IllegalArgumentException ignored) { }
 
         if (gameSessionEntity.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common..game.session.not.found"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.game.session.not.found"));
             return;
         }
         if (!gameSessionEntity.get().getState().equals(GameSessionState.PREPARING)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.command.cannot.join.finished.game"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.can.not.join.finished.game"));
             return;
         }
         if (gameSessionEntity.get().getParticipants().stream().map(it -> it.getUser().getSourceUserId()).collect(Collectors.toSet()).contains(userEntity.getSourceUserId())) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.game.command.lobby", userEntity.getNickname()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.user.already.in.lobby", userEntity.getNickname()));
             return;
         }
         if (gameSessionEntity.get().getParticipants().size() >= gameSessionEntity.get().getDiscipline().getMaxSlots()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.command.no.free.slots"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.no.free.slots"));
             return;
         }
         try {
@@ -94,7 +94,7 @@ public class JoinGameCommand extends AbstractCommand {
             if (freeSlots == 0) {
                 updatedGameSessionEntity = autoStartGame(updatedGameSessionEntity);
                 getBotCallback(event).sendMessage(chatId,
-                        messageSource.getMessage("bot.message.join.game.command.participants.gathered",
+                        messageSource.getMessage("bot.message.join.participants.gathered",
                         updatedGameSessionEntity.getDiscipline().getName(),
                         buildDividedTeamsMessage(updatedGameSessionEntity),
                         updatedGameSessionEntity.getUuid(),
@@ -102,7 +102,7 @@ public class JoinGameCommand extends AbstractCommand {
                 ));
             } else {
                 getBotCallback(event).sendMessage(chatId,
-                        messageSource.getMessage("bot.message.join.game.command",
+                        messageSource.getMessage("bot.message.join.success",
                         userEntity.getNickname(),
                         freeSlots
                 ));

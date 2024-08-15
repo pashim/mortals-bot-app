@@ -60,9 +60,9 @@ public class GameResultCommand extends AbstractCommand {
     @Override
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
-        var userEntity = userService.getUser(event.getChatId(), event.getUserId(), getBotCallback(event));
+        var userEntity = userService.getUser(event.getChatId(), event.getUserId());
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command.no.rights"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.result.unauthorized"));
             return;
         }
 
@@ -70,12 +70,12 @@ public class GameResultCommand extends AbstractCommand {
         Optional<GameSessionEntity> gameSessionEntity = gameSessionRepository.findByUuid(UUID.fromString(arguments[0]));
 
         if (gameSessionEntity.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId,messageSource.getMessage("bot.message.common..game.session.not.found"));
+            getBotCallback(event).sendMessage(chatId,messageSource.getMessage("bot.message.common.game.session.not.found"));
             return;
         }
 
         if (!gameSessionEntity.get().getState().equals(GameSessionState.STARTED)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command", gameSessionEntity.get().getState()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.result.game.status.invalid", gameSessionEntity.get().getState()));
             return;
         }
 
@@ -83,7 +83,7 @@ public class GameResultCommand extends AbstractCommand {
             LOCK.lock();
             var result = Integer.parseInt(arguments[1]);
             var updatedGameSessionEntity = finishGameSession(gameSessionEntity.get(), result);
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command.finish",
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.result.success",
                     gameSessionEntity.get().getDiscipline().getName(),
                     buildGameSessionResultMessage(updatedGameSessionEntity, result)
             ));

@@ -16,7 +16,6 @@ import kz.pashim.mortals.bot.app.service.ValidationService;
 import kz.pashim.mortals.bot.app.util.BotMessageUtils;
 import kz.pashim.mortals.bot.app.util.UserRoleUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +39,7 @@ public class AbortGameCommand extends AbstractCommand {
             ChannelRepository channelRepository,
             GroupRepository groupRepository,
             UserService userService,
-            @Qualifier("messageSource") MortalsMessageSource messageSource) {
+            MortalsMessageSource messageSource) {
         super(botCallbackStrategy, validationService, userService);
         this.gameSessionRepository = gameSessionRepository;
         this.disciplineRepository = disciplineRepository;
@@ -57,14 +56,10 @@ public class AbortGameCommand extends AbstractCommand {
     @Override
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
-        var userEntity = userService.getUser(
-                event.getChatId(),
-                event.getUserId(),
-                botCallbackStrategy.getBotCallback(event.getChannel())
-        );
+        var userEntity = userService.getUser(event.getChatId(), event.getUserId());
 
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.abort.game.command.no.rights.to.interrupt.game.session"));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.abort.game.unauthorized"));
             return;
         }
 
@@ -76,27 +71,26 @@ public class AbortGameCommand extends AbstractCommand {
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", disciplineName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found.with.name", disciplineName));
             return;
         }
 
         var channel = channelRepository.findByName(event.getChannel().name());
         var group = groupRepository.findByChannelAndSourceId(channel, chatId);
         if (group.isEmpty()) {
-            log.error(messageSource.getMessage("error.channel.chat.not.found", channel.getId(), chatId));
-            throw new GroupNotFoundException();
+            throw new GroupNotFoundException(messageSource.getMessage("error.channel.chat.not.found", channel.getId(), chatId));
         }
         var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndStateIn(
             channel, group.get(), discipline.get(), GameSessionState.liveStates()
         );
 
         if (gameSession.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message,abort.game.command.not.found", discipline.get().getName()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.abort.game.not.found", discipline.get().getName()));
             return;
         }
 
         abortGameSession(gameSession.get());
-        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.abort.game.command.session.interrupted", discipline.get().getName()));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.abort.game.session.success", discipline.get().getName()));
     }
 
     private void abortGameSession(GameSessionEntity gameSessionEntity) {
