@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.configuration.properties.MortalsBotProperties;
 import kz.pashim.mortals.bot.app.exception.GroupNotFoundException;
 import kz.pashim.mortals.bot.app.model.Channel;
@@ -30,6 +31,7 @@ public class LeaderboardCommand extends AbstractCommand {
     private final ChannelRepository channelRepository;
     private final GroupRepository groupRepository;
     private final MortalsBotProperties mortalsBotProperties;
+    private final MortalsMessageSource messageSource;
 
     public LeaderboardCommand(
             BotCallbackStrategy botCallbackStrategy,
@@ -39,7 +41,8 @@ public class LeaderboardCommand extends AbstractCommand {
             RatingRepository ratingRepository,
             ChannelRepository channelRepository,
             GroupRepository groupRepository,
-            MortalsBotProperties mortalsBotProperties
+            MortalsBotProperties mortalsBotProperties,
+            MortalsMessageSource messageSource
     ) {
         super(botCallbackStrategy, validationService, userService);
         this.disciplineRepository = disciplineRepository;
@@ -47,6 +50,7 @@ public class LeaderboardCommand extends AbstractCommand {
         this.channelRepository = channelRepository;
         this.groupRepository = groupRepository;
         this.mortalsBotProperties = mortalsBotProperties;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -59,13 +63,13 @@ public class LeaderboardCommand extends AbstractCommand {
         var chatId = event.getChatId();
         var disciplineName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (disciplineName == null) {
-            getBotCallback(event).sendMessage(chatId, "Дисциплина не найдена");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found"));
             return;
         }
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, String.format("Дисциплина %s не найден", disciplineName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", disciplineName));
             return;
         }
 
@@ -76,8 +80,8 @@ public class LeaderboardCommand extends AbstractCommand {
             throw new GroupNotFoundException();
         }
 
-        getBotCallback(event).sendMessage(chatId, String.format(
-                "Таблица лидеров по дисциплине %s\n\n%s",
+        getBotCallback(event).sendMessage(chatId,
+                messageSource.getMessage("bot.message.leaderboard.command.by.discipline",
                 discipline.get().getName(),
                 buildLeaderBoardMessage(discipline.get(), group.get()))
         );

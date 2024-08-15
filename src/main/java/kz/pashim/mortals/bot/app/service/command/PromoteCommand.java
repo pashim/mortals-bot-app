@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.model.UserEntity;
 import kz.pashim.mortals.bot.app.model.UserRole;
 import kz.pashim.mortals.bot.app.model.event.BotEvent;
@@ -10,6 +11,7 @@ import kz.pashim.mortals.bot.app.service.ValidationService;
 import kz.pashim.mortals.bot.app.util.BotMessageUtils;
 import kz.pashim.mortals.bot.app.util.UserRoleUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -20,15 +22,17 @@ public class PromoteCommand extends AbstractCommand {
     public static final String COMMAND = "/promote";
 
     private final UserRepository userRepository;
+    private final MortalsMessageSource messageSource;
 
     public PromoteCommand(
             BotCallbackStrategy botCallbackStrategy,
             ValidationService validationService,
             UserService userService,
-            UserRepository userRepository
-    ) {
+            UserRepository userRepository,
+            @Qualifier("messageSource") MortalsMessageSource messageSource) {
         super(botCallbackStrategy, validationService, userService);
         this.userRepository = userRepository;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -41,24 +45,24 @@ public class PromoteCommand extends AbstractCommand {
         var chatId = event.getChatId();
         var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.ADMIN)) {
-            getBotCallback(event).sendMessage(chatId, "Только администраторы канала могут назначать роли");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.assign.roles"));
             return;
         }
 
         var userName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (userName == null) {
-            getBotCallback(event).sendMessage(chatId, "Пользователь не найден");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.user.not.found"));
             return;
         }
 
-        var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId.toString(), userName);
+        var userToPromote = userRepository.findByGroupSourceIdAndNickname(chatId, userName);
         if (userToPromote.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, String.format("Пользователь %s не найден", userName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", userName));
             return;
         }
 
         promote(userToPromote.get(), UserRole.MODERATOR);
-        getBotCallback(event).sendMessage(chatId, String.format("Пользователю %s назначена роль: %s", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.promote.command.role.assigned", userToPromote.get().getNickname(), UserRole.MODERATOR.displayName));
     }
 
     private void promote(UserEntity user, UserRole userRole) {

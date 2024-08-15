@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.model.GameSessionEntity;
 import kz.pashim.mortals.bot.app.model.GameSessionParticipant;
 import kz.pashim.mortals.bot.app.model.GameSessionState;
@@ -35,17 +36,20 @@ public class GameResultCommand extends AbstractCommand {
     private static final ReentrantLock LOCK = new ReentrantLock();
     private final GameSessionRepository gameSessionRepository;
     private final RatingRepository ratingRepository;
+    private final MortalsMessageSource messageSource;
 
     public GameResultCommand(
             BotCallbackStrategy botCallbackStrategy,
             ValidationService validationService,
             UserService userService,
             GameSessionRepository gameSessionRepository,
-            RatingRepository ratingRepository
+            RatingRepository ratingRepository,
+            MortalsMessageSource messageSource
     ) {
         super(botCallbackStrategy, validationService, userService);
         this.gameSessionRepository = gameSessionRepository;
         this.ratingRepository = ratingRepository;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class GameResultCommand extends AbstractCommand {
         var chatId = event.getChatId();
         var userEntity = userService.getUser(event.getChatId(), event.getUserId(), getBotCallback(event));
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            getBotCallback(event).sendMessage(chatId, "Нет прав завершить игровую сессию");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command.no.rights"));
             return;
         }
 
@@ -66,12 +70,12 @@ public class GameResultCommand extends AbstractCommand {
         Optional<GameSessionEntity> gameSessionEntity = gameSessionRepository.findByUuid(UUID.fromString(arguments[0]));
 
         if (gameSessionEntity.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, "Игровая сессия не найдена");
+            getBotCallback(event).sendMessage(chatId,messageSource.getMessage("bot.message.common..game.session.not.found"));
             return;
         }
 
         if (!gameSessionEntity.get().getState().equals(GameSessionState.STARTED)) {
-            getBotCallback(event).sendMessage(chatId, String.format("Нельзя выводить результат для игровой сессии cо статусом: %s", gameSessionEntity.get().getState()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command", gameSessionEntity.get().getState()));
             return;
         }
 
@@ -79,8 +83,7 @@ public class GameResultCommand extends AbstractCommand {
             LOCK.lock();
             var result = Integer.parseInt(arguments[1]);
             var updatedGameSessionEntity = finishGameSession(gameSessionEntity.get(), result);
-            getBotCallback(event).sendMessage(chatId, String.format(
-                    "Игровая сессия по %s завершена! \n\n%s",
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.game.result.command.finish",
                     gameSessionEntity.get().getDiscipline().getName(),
                     buildGameSessionResultMessage(updatedGameSessionEntity, result)
             ));

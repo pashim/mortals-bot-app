@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.exception.GroupNotFoundException;
 import kz.pashim.mortals.bot.app.model.Channel;
 import kz.pashim.mortals.bot.app.model.ChannelEntity;
@@ -37,6 +38,7 @@ public class StartGameCommand extends AbstractCommand {
     private final DisciplineRepository disciplineRepository;
     private final ChannelRepository channelRepository;
     private final GroupRepository groupRepository;
+    private final MortalsMessageSource messageSource;
 
     public StartGameCommand(
             BotCallbackStrategy botCallbackStrategy,
@@ -45,13 +47,14 @@ public class StartGameCommand extends AbstractCommand {
             GameSessionRepository gameSessionRepository,
             DisciplineRepository disciplineRepository,
             ChannelRepository channelRepository,
-            GroupRepository groupRepository
+            GroupRepository groupRepository, MortalsMessageSource messageSource
     ) {
         super(botCallbackStrategy, validationService, userService);
         this.gameSessionRepository = gameSessionRepository;
         this.disciplineRepository = disciplineRepository;
         this.channelRepository = channelRepository;
         this.groupRepository = groupRepository;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -65,19 +68,19 @@ public class StartGameCommand extends AbstractCommand {
 
         var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
         if (!UserRoleUtils.hasPermission(userEntity, UserRole.MODERATOR)) {
-            getBotCallback(event).sendMessage(chatId, "Нет прав начать игровую сессию");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.no.permission"));
             return;
         }
 
         var disciplineName = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (disciplineName == null) {
-            getBotCallback(event).sendMessage(chatId, "Дисциплина не найдена");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found"));
             return;
         }
 
         var discipline = disciplineRepository.findByNameIgnoreCase(disciplineName);
         if (discipline.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, String.format("Дисциплина %s не найден", disciplineName));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.discipline.not.found", disciplineName));
             return;
         }
 
@@ -87,7 +90,7 @@ public class StartGameCommand extends AbstractCommand {
                 chatId
         );
         if (group.isEmpty()) {
-            log.error("Группа (channel={}, chatId={}) не найдена", channel.getId(), chatId);
+            log.error(messageSource.getMessage("error.group.not.found",channel.getId(), chatId));
             throw new GroupNotFoundException();
         }
         var gameSession = gameSessionRepository.findByChannelAndGroupAndDisciplineAndStateIn(
@@ -95,19 +98,13 @@ public class StartGameCommand extends AbstractCommand {
         );
 
         if (gameSession.isPresent()) {
-            getBotCallback(event).sendMessage(chatId, String.format("Игровая сессия по %s уже имеется", discipline.get().getName()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.game.session.already.available", discipline.get().getName()));
             return;
         }
 
         var gameSessionEntity = createGameSession(channel, group.get(), discipline.get(), userEntity);
-        getBotCallback(event).sendMessage(chatId, String.format(
-                "Игровая сессия по %s начинается! \n\nИгроки могут присоединиться к сессии командой",
-                discipline.get().getName()
-        ));
-        getBotCallback(event).sendMessage(chatId, String.format(
-                "/join %s",
-                gameSessionEntity.getUuid()
-        ));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.game.session.begin", discipline.get().getName()));
+        getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.start.game.join", gameSessionEntity.getUuid()));
     }
 
     private GameSessionEntity createGameSession(ChannelEntity channelEntity, GroupEntity groupEntity, DisciplineEntity disciplineEntity, UserEntity userEntity) {
