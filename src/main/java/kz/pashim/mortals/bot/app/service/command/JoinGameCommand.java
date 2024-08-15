@@ -1,5 +1,6 @@
 package kz.pashim.mortals.bot.app.service.command;
 
+import kz.pashim.mortals.bot.app.configuration.messages.MortalsMessageSource;
 import kz.pashim.mortals.bot.app.model.GameSessionEntity;
 import kz.pashim.mortals.bot.app.model.GameSessionParticipant;
 import kz.pashim.mortals.bot.app.model.GameSessionState;
@@ -34,17 +35,20 @@ public class JoinGameCommand extends AbstractCommand {
 
     private final GameSessionRepository gameSessionRepository;
     private final RatingRepository ratingRepository;
+    private final MortalsMessageSource messageSource;
 
     public JoinGameCommand(
             BotCallbackStrategy botCallbackStrategy,
             ValidationService validationService,
             UserService userService,
             GameSessionRepository gameSessionRepository,
-            RatingRepository ratingRepository
+            RatingRepository ratingRepository,
+            MortalsMessageSource messageSource
     ) {
         super(botCallbackStrategy, validationService, userService);
         this.gameSessionRepository = gameSessionRepository;
         this.ratingRepository = ratingRepository;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -55,10 +59,10 @@ public class JoinGameCommand extends AbstractCommand {
     @Override
     public void handle(BotEvent event) {
         var chatId = event.getChatId();
-        var userEntity = userService.getUser(chatId, event.getUserId(), getBotCallback(event));
+        var userEntity = userService.getUser(chatId, event.getUserId());
         var sessionUuid = BotMessageUtils.extractFirstArgument(event.getCommand());
         if (sessionUuid == null) {
-            getBotCallback(event).sendMessage(chatId, "UUID сессии не найден");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.session.uuid.not.found"));
             return;
         }
 
@@ -68,19 +72,19 @@ public class JoinGameCommand extends AbstractCommand {
         } catch (IllegalArgumentException ignored) { }
 
         if (gameSessionEntity.isEmpty()) {
-            getBotCallback(event).sendMessage(chatId, "Игровая сессия не найдена");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.common.game.session.not.found"));
             return;
         }
         if (!gameSessionEntity.get().getState().equals(GameSessionState.PREPARING)) {
-            getBotCallback(event).sendMessage(chatId, "Нельзя присоединиться к завершенной игровой сессии");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.can.not.join.finished.game"));
             return;
         }
         if (gameSessionEntity.get().getParticipants().stream().map(it -> it.getUser().getSourceUserId()).collect(Collectors.toSet()).contains(userEntity.getSourceUserId())) {
-            getBotCallback(event).sendMessage(chatId, String.format("Пользователь %s уже находится в лобби", userEntity.getNickname()));
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.user.already.in.lobby", userEntity.getNickname()));
             return;
         }
         if (gameSessionEntity.get().getParticipants().size() >= gameSessionEntity.get().getDiscipline().getMaxSlots()) {
-            getBotCallback(event).sendMessage(chatId, "Нет свободных слотов");
+            getBotCallback(event).sendMessage(chatId, messageSource.getMessage("bot.message.join.no.free.slots"));
             return;
         }
         try {
@@ -89,16 +93,16 @@ public class JoinGameCommand extends AbstractCommand {
             var freeSlots = getFreeSlots(updatedGameSessionEntity);
             if (freeSlots == 0) {
                 updatedGameSessionEntity = autoStartGame(updatedGameSessionEntity);
-                getBotCallback(event).sendMessage(chatId, String.format(
-                        "Все участники собрались, игра по %s начинается, игроки были автоматом распределены на команды \n\n%s \n\nпрошу всех игроков зайти в лобби. \n\nпо окончанию игры участники должны внести результат командой: \n/result %s (%s)",
+                getBotCallback(event).sendMessage(chatId,
+                        messageSource.getMessage("bot.message.join.participants.gathered",
                         updatedGameSessionEntity.getDiscipline().getName(),
                         buildDividedTeamsMessage(updatedGameSessionEntity),
                         updatedGameSessionEntity.getUuid(),
                         IntStream.range(1, updatedGameSessionEntity.getDiscipline().getTeamsCount()).boxed().map(Object::toString).collect(Collectors.joining("/"))
                 ));
             } else {
-                getBotCallback(event).sendMessage(chatId, String.format(
-                        "Игрок %s присоединяется к лобби, осталось %d свободных слотов",
+                getBotCallback(event).sendMessage(chatId,
+                        messageSource.getMessage("bot.message.join.success",
                         userEntity.getNickname(),
                         freeSlots
                 ));
